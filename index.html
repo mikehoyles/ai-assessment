@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI Readiness Assessment | Ellis</title>
+<style>
+  :root{
+    --bg:#08080c;
+    --card:#101019;
+    --card-2:#15151f;
+    --row:#16161f;
+    --row-border:#26263a;
+    --accent:#7b6cf6;
+    --accent-2:#9d7bff;
+    --text:#f2f2f7;
+    --muted:#9a9aac;
+    --ring:rgba(123,108,246,.45);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{width:100%;max-width:560px}
+  .card{
+    background:linear-gradient(180deg,var(--card) 0%,var(--card-2) 100%);
+    border:1px solid #1e1e2c;
+    border-radius:20px;
+    padding:32px;
+    box-shadow:0 30px 80px rgba(0,0,0,.45);
+  }
+  .badge{
+    display:inline-block;
+    background:rgba(123,108,246,.16);
+    color:#bcaffd;
+    font-size:12px;
+    font-weight:600;
+    letter-spacing:.02em;
+    padding:6px 12px;
+    border-radius:999px;
+    margin-bottom:16px;
+  }
+  h1{font-size:26px;line-height:1.2;margin:0 0 10px}
+  .sub{color:var(--muted);font-size:15px;line-height:1.5;margin:0 0 24px}
+  .meta{color:var(--muted);font-size:12px;text-align:center;margin-top:14px}
+  .btn{
+    display:block;width:100%;border:0;cursor:pointer;
+    background:linear-gradient(90deg,var(--accent) 0%,var(--accent-2) 100%);
+    color:#fff;font-size:16px;font-weight:600;
+    padding:15px 18px;border-radius:12px;
+    transition:transform .08s ease,box-shadow .2s ease;
+    text-align:center;text-decoration:none;
+  }
+  .btn:hover{transform:translateY(-1px);box-shadow:0 10px 24px rgba(123,108,246,.35)}
+  .btn:active{transform:translateY(0)}
+  .progress{height:5px;background:#1d1d2b;border-radius:999px;overflow:hidden;margin-bottom:18px}
+  .progress > i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent-2));border-radius:999px;transition:width .35s ease}
+  .qcount{color:var(--muted);font-size:13px;margin-bottom:6px}
+  h2{font-size:20px;margin:0 0 6px}
+  .qsub{color:var(--muted);font-size:14px;margin:0 0 18px}
+  .opt{
+    display:block;width:100%;text-align:left;cursor:pointer;
+    background:var(--row);border:1px solid var(--row-border);
+    color:var(--text);font-size:15px;
+    padding:14px 16px;border-radius:10px;margin-bottom:10px;
+    transition:background .12s ease,border-color .12s ease,transform .06s ease;
+  }
+  .opt:hover{background:#1d1d2e;border-color:#3a3a55}
+  .opt.sel{background:linear-gradient(90deg,rgba(123,108,246,.85),rgba(157,123,255,.85));border-color:transparent}
+  .back{
+    display:block;width:100%;margin-top:6px;cursor:pointer;
+    background:rgba(123,108,246,.10);border:1px solid #232338;color:#bcaffd;
+    font-size:14px;font-weight:600;padding:13px;border-radius:10px;text-align:center;
+  }
+  .back:hover{background:rgba(123,108,246,.18)}
+  .field{
+    width:100%;background:#101018;border:1px solid #26263a;border-radius:10px;
+    color:var(--text);font-size:15px;padding:14px 16px;margin-bottom:12px;outline:none;
+    transition:border-color .15s ease,box-shadow .15s ease;
+  }
+  .field::placeholder{color:#6c6c80}
+  .field:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--ring)}
+  .field.err{border-color:#ff6b6b;box-shadow:0 0 0 3px rgba(255,107,107,.25)}
+  .errmsg{color:#ff8a8a;font-size:13px;margin:-4px 0 12px}
+  .row2{display:flex;gap:12px}
+  .row2 .btn{flex:1}
+  .row2 .back{flex:1;margin-top:0}
+  .center{text-align:center}
+  .emoji{font-size:44px;text-align:center;margin:4px 0 14px}
+  .score{color:var(--muted);font-size:13px;text-align:right;margin-top:6px}
+  .tier-name{display:inline-block;background:rgba(123,108,246,.16);color:#bcaffd;font-size:12px;font-weight:600;padding:6px 12px;border-radius:999px;margin-bottom:12px}
+  .label{color:var(--accent-2);font-size:12px;font-weight:700;letter-spacing:.06em;margin:22px 0 8px}
+  .step{font-size:15px;padding:11px 0;border-top:1px solid #1d1d2b}
+  .step:first-of-type{border-top:0}
+  .tags{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:22px}
+  .tag{background:rgba(123,108,246,.10);border:1px solid #2a2a40;color:#cfc7fb;font-size:13px;padding:7px 12px;border-radius:999px}
+  .hide{display:none}
+  .fade{animation:fade .28s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  @media (max-width:520px){ .card{padding:22px} h1{font-size:22px} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card" id="card"><!-- screens injected here --></div>
+</div>
+
+<script>
+/* ============================================================
+   ELLIS — AI READINESS ASSESSMENT (self-contained)
+   - 8 questions (Q1 industry + Q8 frustration = segmentation, unscored)
+   - Q2–Q6 + Q7 scored 0–3  →  max 18
+   - Tiers: 0–6 Foundation · 7–12 Growth · 13–18 Scale
+   - Results CTA → cal.com/hireellis/30min (new tab)
+   - Leads → HubSpot (resilient: results always show)
+   ============================================================ */
+
+const CAL_URL = "https://cal.com/hireellis/30min";
+
+/* --- HubSpot Forms submission endpoint --- */
+const HS_PORTAL = "48475744";
+const HS_FORM   = "489e10e9-6306-45a9-9c91-11312b72fd7b";
+const HS_ENDPOINT = `https://api.hsforms.com/submissions/v3/integration/submit/${HS_PORTAL}/${HS_FORM}`;
+
+/* --- Questions ---
+   scored:true => contributes 0..3 by option index.
+   Q1 (industry) & Q8 (frustration) are scored:false (segmentation only). */
+const QUESTIONS = [
+  { key:"industry", scored:false,
+    title:"What industry are you in?", sub:"Helps us tailor recommendations.",
+    options:["Auto, Trades & Home Services","Professional Services","Real Estate & Property","E-commerce & Retail","Healthcare & Wellness","Other"] },
+  { key:"lead_volume", scored:true,
+    title:"Monthly lead volume?", sub:"Estimate across all channels.",
+    options:["We don't track this","Under 20","20-100","100+ and we track sources"] },
+  { key:"speed_to_lead", scored:true,
+    title:"How fast do new leads hear back?", sub:"Speed-to-lead is the #1 conversion factor.",
+    options:["We miss some entirely","Next business day","Within a few hours","Under 5 min — automated"] },
+  { key:"website", scored:true,
+    title:"How would you describe your website?", sub:"Your site is your 24/7 salesperson.",
+    options:["Exists but untouched for years","Looks okay but no leads","Generates some leads","Optimized, fast, converts well"] },
+  { key:"pipeline", scored:true,
+    title:"How do you manage your pipeline?", sub:"Businesses that know their numbers win.",
+    options:["Spreadsheets or memory","Basic CRM we barely use","Active CRM with tracking","CRM with automation & reporting"] },
+  { key:"paid_ads", scored:true,
+    title:"What does your paid advertising look like?", sub:"Right strategy = revenue machine.",
+    options:["We don't run paid ads","Occasional boosted posts","Campaigns but unsure of ROI","Full-funnel with tracked conversions"] },
+  { key:"automation", scored:true,
+    title:"How automated is your marketing?", sub:"AI turns hours into minutes.",
+    options:["Mostly manual","Occasional email blasts","Some automated sequences","Multi-channel automation"] },
+  { key:"frustration", scored:false,
+    title:"Biggest marketing frustration?", sub:"Honest answer = highest-impact opportunity.",
+    options:["Not enough leads","Leads don't convert","No idea what's working","Can't prove ROI","Too much manual work"] }
+];
+
+const MAX_SCORE = QUESTIONS.filter(q=>q.scored).length * 3; // 6 * 3 = 18
+
+const TIERS = [
+  { name:"Foundation Stage", range:[0,6], emoji:"🌱",
+    headline:"Your marketing has massive untapped potential.",
+    desc:"You have the most room to grow — and the best ROI from getting fundamentals right. A proper website, tracking, and basic paid strategy can transform your lead flow fast.",
+    steps:[
+      "Fix website speed — every second costs 7% in conversions",
+      "Set up conversion tracking to know where leads come from",
+      "Optimize your Google Business Profile"],
+    services:["Google Ads Setup","Website Optimization","Lead Tracking"] },
+  { name:"Growth Stage", range:[7,12], emoji:"🚀",
+    headline:"You've got the basics — now it's time to scale.",
+    desc:"Your foundation is solid but not maximized. Smarter ad spend, a real CRM, and automated follow-up separate growing businesses from stuck ones.",
+    steps:[
+      "Implement a CRM — stop losing leads in spreadsheets",
+      "Set up automated follow-up for leads that don't convert immediately",
+      "Restructure ad campaigns by service line"],
+    services:["CRM Integration","Email Automation","Paid Media Strategy"] },
+  { name:"Scale Stage", range:[13,18], emoji:"⚡",
+    headline:"You're advanced — let's add rocket fuel.",
+    desc:"You're ahead of 90% of businesses. The next level: AI-powered lead scoring, closed-loop attribution, and multi-market expansion.",
+    steps:[
+      "Sync CRM revenue to ad platforms for smarter bidding",
+      "Deploy AI lead qualification to surface high-value leads",
+      "Build geo-specific landing pages for expansion"],
+    services:["AI Automation","Attribution Modeling","Multi-Channel Expansion"] }
+];
+
+/* --- State --- */
+let step = -1;                       // -1 intro, 0..7 questions, 8 lead form, 9 results
+const answers = new Array(QUESTIONS.length).fill(null); // chosen option index per question
+const card = document.getElementById("card");
+
+const esc = s => String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function render(html){ card.innerHTML = html; card.firstElementChild && card.firstElementChild.classList.add("fade"); }
+
+/* --- Intro --- */
+function renderIntro(){
+  render(`
+    <div>
+      <span class="badge">AI Readiness Assessment</span>
+      <h1>Is your business ready for AI?</h1>
+      <p class="sub">8 quick questions. See exactly where you stand and what to do next.</p>
+      <button class="btn" id="start">▶ Start Free Assessment</button>
+      <div class="meta">Takes about 2 minutes · No obligation</div>
+    </div>`);
+  document.getElementById("start").onclick = ()=>{ step=0; renderQuestion(); };
+}
+
+/* --- Questions --- */
+function renderQuestion(){
+  const q = QUESTIONS[step];
+  const pct = Math.round(((step) / QUESTIONS.length) * 100);
+  const opts = q.options.map((o,i)=>
+    `<button class="opt${answers[step]===i?' sel':''}" data-i="${i}">${esc(o)}</button>`).join("");
+  render(`
+    <div>
+      <div class="progress"><i style="width:${pct}%"></i></div>
+      <div class="qcount">Question ${step+1} of ${QUESTIONS.length}</div>
+      <h2>${esc(q.title)}</h2>
+      <p class="qsub">${esc(q.sub)}</p>
+      ${opts}
+      ${step>0 ? `<button class="back" id="back">← Back</button>` : ``}
+    </div>`);
+  card.querySelectorAll(".opt").forEach(b=>{
+    b.onclick = ()=>{
+      answers[step] = parseInt(b.dataset.i,10);
+      if(step < QUESTIONS.length-1){ step++; renderQuestion(); }
+      else { step = QUESTIONS.length; renderLeadForm(); }
+    };
+  });
+  const back = document.getElementById("back");
+  if(back) back.onclick = ()=>{ step--; renderQuestion(); };
+}
+
+/* --- Lead form --- */
+function renderLeadForm(){
+  render(`
+    <div>
+      <h1 style="font-size:22px">Almost there…</h1>
+      <p class="sub">Where should we send your personalized action plan?</p>
+      <input class="field" id="f_name" placeholder="Your name" autocomplete="name" />
+      <input class="field" id="f_email" placeholder="Work email" type="email" autocomplete="email" />
+      <div class="errmsg hide" id="emailErr">Please enter a valid email address.</div>
+      <input class="field" id="f_company" placeholder="Company name" autocomplete="organization" />
+      <input class="field" id="f_phone" placeholder="Phone (optional)" type="tel" autocomplete="tel" />
+      <div class="row2">
+        <button class="back" id="back">← Back</button>
+        <button class="btn" id="submit">Get My Results →</button>
+      </div>
+      <div class="meta">No spam. Results ready instantly.</div>
+    </div>`);
+  document.getElementById("back").onclick = ()=>{ step = QUESTIONS.length-1; renderQuestion(); };
+  document.getElementById("submit").onclick = onSubmit;
+  document.getElementById("f_email").addEventListener("input", ()=>{
+    document.getElementById("f_email").classList.remove("err");
+    document.getElementById("emailErr").classList.add("hide");
+  });
+}
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+function onSubmit(){
+  const name = document.getElementById("f_name").value.trim();
+  const email = document.getElementById("f_email").value.trim();
+  const company = document.getElementById("f_company").value.trim();
+  const phone = document.getElementById("f_phone").value.trim();
+
+  if(!EMAIL_RE.test(email)){
+    document.getElementById("f_email").classList.add("err");
+    document.getElementById("emailErr").classList.remove("hide");
+    document.getElementById("f_email").focus();
+    return;
+  }
+
+  const score = computeScore();
+  const tier = tierFor(score);
+
+  submitToHubSpot({name,email,company,phone,score,tier}); // fire-and-forget
+  renderResults(score, tier, {name, email});
+}
+
+/* --- Scoring --- */
+function computeScore(){
+  let s = 0;
+  QUESTIONS.forEach((q,i)=>{ if(q.scored && answers[i]!=null) s += Math.min(answers[i],3); });
+  return s;
+}
+function tierFor(score){
+  return TIERS.find(t=> score>=t.range[0] && score<=t.range[1]) || TIERS[0];
+}
+
+/* --- Results --- */
+function renderResults(score, tier, lead){
+  step = 9;
+  const steps = tier.steps.map(s=>`<div class="step">⚡ ${esc(s)}</div>`).join("");
+  const tags = tier.services.map(s=>`<span class="tag">${esc(s)}</span>`).join("");
+  const pct = Math.round((score/MAX_SCORE)*100);
+  // Pre-fill the cal.com booking form with the person's name + email.
+  const calUrl = CAL_URL + "?" + new URLSearchParams({
+    name: (lead && lead.name) || "",
+    email: (lead && lead.email) || ""
+  }).toString();
+  render(`
+    <div>
+      <div class="emoji">${tier.emoji}</div>
+      <div class="center"><span class="tier-name">${esc(tier.name)}</span></div>
+      <div class="progress"><i style="width:${pct}%"></i></div>
+      <div class="score">Score: ${score} / ${MAX_SCORE}</div>
+      <h1 style="font-size:23px;margin-top:10px">${esc(tier.headline)}</h1>
+      <p class="sub">${esc(tier.desc)}</p>
+      <div class="label">YOUR NEXT STEPS</div>
+      ${steps}
+      <div class="label">RECOMMENDED SERVICES</div>
+      <div class="tags">${tags}</div>
+      <a class="btn" href="${calUrl}" target="_blank" rel="noopener">Book a Free Strategy Call →</a>
+    </div>`);
+}
+
+/* --- HubSpot (resilient: never blocks the UI) --- */
+function submitToHubSpot({name,email,company,phone,score,tier}){
+  try{
+    const parts = (name||"").split(" ");
+    const firstname = parts.shift() || "";
+    const lastname = parts.join(" ");
+    const answerSummary = QUESTIONS.map((q,i)=>{
+      const a = answers[i]; return `${q.title} ${a!=null?'→ '+q.options[a]:'→ (skipped)'}`;
+    }).join("\n");
+    const message =
+      `AI Readiness Assessment result: ${tier.name} (${score}/${MAX_SCORE})\n\n` + answerSummary;
+
+    // Standard contact properties only (guaranteed to exist) + optional "message".
+    const baseFields = [
+      {name:"email", value:email},
+      {name:"firstname", value:firstname},
+      {name:"lastname", value:lastname},
+      {name:"company", value:company},
+      {name:"phone", value:phone}
+    ].filter(f=>f.value);
+    const fullFields = baseFields.concat([{name:"message", value:message}]);
+
+    const ctx = { pageUri: location.href, pageName: "AI Readiness Assessment" };
+    const post = (fields)=> fetch(HS_ENDPOINT,{
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify({ fields, context: ctx })
+    });
+
+    // Try with the result summary; if HubSpot rejects (e.g. no "message"
+    // property in the portal), retry with standard fields so the lead is
+    // never lost. Either way the user still sees results.
+    post(fullFields)
+      .then(r=>{ if(!r.ok) post(baseFields).catch(()=>{}); })
+      .catch(()=> post(baseFields).catch(()=>{}));
+  }catch(e){ /* never block results */ }
+}
+
+/* --- boot --- */
+renderIntro();
+</script>
+</body>
+</html>
