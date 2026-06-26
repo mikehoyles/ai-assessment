@@ -371,5 +371,20 @@ function submitToHubSpot({name,email,company,phone,score,tier}){
 /* --- boot --- */
 renderIntro();
 </script>
+
+<!-- GA4 Assessment Tracking -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        var form = document.querySelector('form');
+        if (form) {
+          form.addEventListener('submit', function() {
+            gtag('event', 'assessment_submit', {
+              'event_category': 'lead',
+              'event_label': 'assessment_hireellis'
+            });
+          });
+        }
+      });
+</script> 
 </body>
 </html>
