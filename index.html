@@ -330,19 +330,39 @@ function renderResults(score, tier, lead){
     </div>`);
 }
 
+/* --- email type: segmentation context only; nothing is blocked --- */
+const FREE_EMAIL_DOMAINS = ["gmail.com","googlemail.com","yahoo.com","yahoo.ca","ymail.com","hotmail.com","hotmail.ca","outlook.com","outlook.ca","live.com","live.ca","msn.com","aol.com","icloud.com","me.com","mac.com","proton.me","protonmail.com","pm.me","gmx.com","mail.com","zoho.com","yandex.com","comcast.net","rogers.com","shaw.ca","telus.net","bell.net","sympatico.ca","cogeco.ca"];
+function emailTypeFor(email){
+  const d = (String(email).split("@")[1]||"").toLowerCase().trim();
+  return !d ? "unknown" : (FREE_EMAIL_DOMAINS.includes(d) ? "personal" : "business");
+}
+
 /* --- HubSpot (resilient: never blocks the UI) --- */
 function submitToHubSpot({name,email,company,phone,score,tier}){
   try{
     const parts = (name||"").split(" ");
     const firstname = parts.shift() || "";
     const lastname = parts.join(" ");
-    const answerSummary = QUESTIONS.map((q,i)=>{
-      const a = answers[i]; return `${q.title} ${a!=null?'→ '+q.options[a]:'→ (skipped)'}`;
-    }).join("\n");
-    const message =
-      `AI Readiness Assessment result: ${tier.name} (${score}/${MAX_SCORE})\n\n` + answerSummary;
+    const etype = emailTypeFor(email);
+    const pct = Math.round((score/MAX_SCORE)*100);
 
-    // Standard contact properties only (guaranteed to exist) + optional "message".
+    // Per-question answers WITH point values (scored questions show pts).
+    const answerSummary = QUESTIONS.map((q,i)=>{
+      const a = answers[i];
+      const label = a!=null ? q.options[a] : "(skipped)";
+      const pts = q.scored ? ` [${a!=null?Math.min(a,3):0} pts]` : "";
+      return `• ${q.title} → ${label}${pts}`;
+    }).join("\n");
+
+    const services = (tier.services||[]).join(", ");
+    const message =
+      `AI Readiness Assessment\n` +
+      `Result: ${tier.name} — ${score}/${MAX_SCORE} (${pct}%)\n` +
+      `Email type: ${etype}\n` +
+      `Recommended: ${services}\n\n` +
+      `Answers:\n${answerSummary}`;
+
+    // Standard contact properties only (guaranteed to exist).
     const baseFields = [
       {name:"email", value:email},
       {name:"firstname", value:firstname},
@@ -350,7 +370,16 @@ function submitToHubSpot({name,email,company,phone,score,tier}){
       {name:"company", value:company},
       {name:"phone", value:phone}
     ].filter(f=>f.value);
-    const fullFields = baseFields.concat([{name:"message", value:message}]);
+
+    // + the full result summary in "message" (the field that must exist on the form).
+    const withMessage = baseFields.concat([{name:"message", value:message}]);
+
+    // + optional structured properties — only land if you add them to the form.
+    const withProps = withMessage.concat([
+      {name:"ai_assessment_score", value:String(score)},
+      {name:"ai_assessment_tier", value:tier.name},
+      {name:"ai_assessment_email_type", value:etype}
+    ]);
 
     const ctx = { pageUri: location.href, pageName: "AI Readiness Assessment" };
     const post = (fields)=> fetch(HS_ENDPOINT,{
@@ -359,42 +388,20 @@ function submitToHubSpot({name,email,company,phone,score,tier}){
       body: JSON.stringify({ fields, context: ctx })
     });
 
-    // Try with the result summary; if HubSpot rejects (e.g. no "message"
-    // property in the portal), retry with standard fields so the lead is
-    // never lost. Either way the user still sees results.
-    post(fullFields)
+    // Cascade richest → message-only → base-only, so the lead is NEVER lost.
+    // (Same resilient pattern as before; just two extra fallbacks ahead of it.)
+    const tryMessageThenBase = ()=> post(withMessage)
       .then(r=>{ if(!r.ok) post(baseFields).catch(()=>{}); })
       .catch(()=> post(baseFields).catch(()=>{}));
+
+    post(withProps)
+      .then(r=>{ if(!r.ok) tryMessageThenBase(); })
+      .catch(()=> tryMessageThenBase());
   }catch(e){ /* never block results */ }
 }
 
 /* --- boot --- */
 renderIntro();
 </script>
-
-<!-- GA4 Assessment Tracking -->
-    <script>
-      document.addEventListener('DOMContentLoaded', function() {
-        var form = document.querySelector('form');
-        if (form) {
-          form.addEventListener('submit', function() {
-            gtag('event', 'assessment_submit', {
-              'event_category': 'lead',
-              'event_label': 'assessment_hireellis'
-            });
-          });
-        }
-      });
-</script> 
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=AW-18079680620"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'AW-18079680620');
-</script>
-
 </body>
 </html>
